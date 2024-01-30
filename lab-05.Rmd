@@ -17,33 +17,122 @@ states <- read_csv("data/states.csv")
 ```
 
 ### Exercise 1
+After filtering the set, there are three Denny's locations in Alaska
 
-Remove this text, and add your answer for Exercise 1 here.
-Add code chunks as needed.
-Don't forget to label your code chunk.
-Do not use spaces in code chunk labels.
+```{r alaska_filter}
+dn_ak <- dennys %>%
+  filter(state == "AK")
+nrow(dn_ak)
 
+```
 ### Exercise 2
-
-Remove this text, and add your answer for Exercise 1 here.
-Add code chunks as needed.
-Don't forget to label your code chunk.
-Do not use spaces in code chunk labels.
-
+There are only two La Quinta's in Alaska
+```{r alaska_filter_lq}
+lq_ak <- laquinta %>%
+  filter(state == "AK")
+nrow(lq_ak)
+```
 ### Exercise 3
-
-...
+There are 6 possible pairings of Denny's and Laquintas in Alaska that we will calculate distances for. 
 
 ### Exercise 4
+There are 6 observations in this new dataframe, consistent with what I would expect. The variables inlcude address, city, state, zipcode, longitude, and lattitude. I'm slightly confused because there are actually eleven variables being observed, where there are six observations of addressed from the Denny's dataset, and six observations from the Laquinta dataset, even though both of these have two and three respectively, but what I hope is happening is that each observation is a pair of locations.
+``` {r joining_datasets}
+dn_lq_ak <- full_join(dn_ak, lq_ak, by = "state")
+dn_lq_ak
 
-...
 
+```
 ### Exercise 5
 
-...
+In order to add a new variable to this dataframe without altering the other data, I would use the mutate function from tidyverse.
 
 ### Exercise 6
+```{r haversine_fct}
+haversine <- function(long1, lat1, long2, lat2, round = 3) {
+  # convert to radians
+  long1 <- long1 * pi / 180
+  lat1 <- lat1 * pi / 180
+  long2 <- long2 * pi / 180
+  lat2 <- lat2 * pi / 180
 
-...
+  R <- 6371 # Earth mean radius in km
 
-Add exercise headings as needed.
+  a <- sin((lat2 - lat1) / 2)^2 + cos(lat1) * cos(lat2) * sin((long2 - long1) / 2)^2
+  d <- R * 2 * asin(sqrt(a))
+
+  return(round(d, round)) } 
+#Stolen from SMG :)
+```
+
+Adding distance variable, ask SMG what unit of measure haversine spits out.
+```{r distance}
+distance_ak <- dn_lq_ak %>%
+  mutate(distance = haversine(longitude.x, latitude.x, longitude.y, latitude.y, round = 3))
+
+distance_ak
+
+```
+
+### Exercise 7
+``` {r minimun_distance}
+dn_lq_ak_mindist <- distance_ak %>%
+  group_by(address.x) %>%
+  summarize(closest = min(distance))
+
+dn_lq_ak_mindist
+
+```
+
+### Exercise 8
+``` {r visualising_establishment_distances}
+ggplot(dn_lq_ak) + geom_point(aes(x = longitude.x, y = latitude.x, col = "red")) + geom_point(aes(x = longitude.y, y = latitude.y, col = "black")) + labs(x = "Longitude", y = "Latitude", color = "Establishment", title = "Distribution of Dennys / Laquintas in Alaska") + theme_minimal() 
+  
+  #legend(1, 95, legend=c("Denny's", "La Quinta"), col=c("red", "black"))
+
+ggplot(dn_lq_ak_mindist, mapping = aes(x = address.x, y = closest, color = address.x)) + geom_boxplot() + labs(x = "Denny's address", y = "Distance to nearest La Quitna", title = "Distance from Denny's to Laquintas in Alaska") + theme_minimal() + guides(color = FALSE)
+
+#ggplot() + layer(data = dn_lq_ak, mapping = aes(x = latitude.x, y = longitude.x, groupName =="Dennys", groupColors=c('#999999')), geom_point(), stat = "address", position = "address")
+
+#dn_lq_ak %>%
+  #ggplot(mapping = aes(x = longitude.x, y = latitude.x, color = "#999")) + geom_point() + labs(x = "Longitude", y = "Latitude", color = "Establishment", title = "Distribution of Dennys / Laquintas in Alaska") 
+#ggplot(dn_lq_ak, mapping = aes(x = longitude.y, y = latitude.y, color = "#111")) + geom_point()
+```
+
+Looking at these visualizations, it seems like Denny's and La Quinta do tend to be quite close to eachother, with none being further than five (units) apart, and one pair being only 2 (units) apart. It appears that Denny's and La Quinta are both located in only two cities, Fairbanks, and Anchorage, and none of these locations are very far apart because of this. 
+
+### Exercise 9
+``` {r NC_analysis}
+#Filtering for NC
+dn_nc <- dennys %>%
+  filter(state == "NC")
+nrow(dn_nc)
+# This time, there are far more Denny's locations, with 28 observations across the state
+
+lq_nc <- laquinta %>%
+  filter(state == "NC")
+nrow(lq_nc)
+#There are also more La Quinta's, although not in the same proportions, with only 12 locations
+
+#joining the data sets
+dn_lq_nc <- full_join(dn_nc, lq_nc, by = "state")
+dn_lq_nc
+
+distance_nc <- dn_lq_nc %>%
+  mutate(distance = haversine(longitude.x, latitude.x, longitude.y, latitude.y, round = 3))
+
+distance_nc
+```
+
+### Exercise 10
+``` {r Texas_analysis}
+
+```
+
+### Exercise 11
+``` {r Colorado_analysis}
+
+```
+
+### Exercise 12
+Mitch Hedberg's joke is most true in ______
